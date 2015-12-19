@@ -4,7 +4,14 @@
  */
 package de.sebastiankings.renderengine;
 
-import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_A;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_D;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_S;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_W;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
+import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
 import static org.lwjgl.opengl.GL11.GL_BACK;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_CULL_FACE;
@@ -54,7 +61,10 @@ public class MainGameLoop {
 	
 	private static EntityShaderProgram entityShader;
 	private static TerrainShaderProgramm terrainShader;
-
+	
+	private static Entity player;
+	private static List<Entity> shots;
+	
 	public static void main(String[] args) {
 
 		try {
@@ -67,10 +77,11 @@ public class MainGameLoop {
 			inputs = new Inputs();
 			inputs.registerInputs(DisplayManager.getWindow());
 			ArrayList<Entity> entities = new ArrayList<Entity>();
-			Entity ball = EntityFactory.createEntity(EntityType.GUMBA);
-			entities.add(ball);
+			player = EntityFactory.createEntity(EntityType.SHIP);
+			player.moveEntityGlobal(new Vector3f(0,1.5f,0));
+			entities.add(player);
 
-			Terrain terrain = TerrainUtils.generateTerrain(100f, 1000f);
+			Terrain terrain = TerrainUtils.generateTerrain(300f, 10000f);
 			
 			
 			Vector3f movement = new Vector3f(0,0,-0.05f);
@@ -92,8 +103,7 @@ public class MainGameLoop {
 					if (entity.showEntity()) {
 						entity.render(0.0f, entityShader, camera, light);
 					}
-					entity.rotateZ((float) (Math.PI / 500));
-					entity.moveEntity(movement);
+					entity.moveEntityGlobal(movement);
 				}
 				camera.move(movement);
 				DisplayManager.updateDisplay();
@@ -128,6 +138,29 @@ public class MainGameLoop {
 		if (inputs.keyPresse(GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose(DisplayManager.getWindow(), GL_TRUE);
 		}
+		if (inputs.keyPresse(GLFW_KEY_A)) {
+			player.getEntityState().setRotationZ((float) Math.toRadians(10.0d));
+			player.moveEntityRelativ(new Vector3f(-Constants.SHIP_MOVEMENT_SPPED,0,0));
+		}
+		if (inputs.keyPresse(GLFW_KEY_D)) {
+			player.getEntityState().setRotationZ((float) Math.toRadians(-10.0d));
+			player.moveEntityRelativ(new Vector3f(Constants.SHIP_MOVEMENT_SPPED,0,0));
+		}
+		//CLEAR ROTATION IF NOT LEFT OR RIGHT
+		if(!inputs.keyPresse(GLFW_KEY_A) || !inputs.keyPresse(GLFW_KEY_D)){
+			player.getEntityState().setRotationZ((float) Math.toRadians(0.0d));
+		}
+		if (inputs.keyPresse(GLFW_KEY_W)) {
+			player.moveEntityRelativ(new Vector3f(0,0,-Constants.SHIP_MOVEMENT_SPPED));
+		}
+		if (inputs.keyPresse(GLFW_KEY_S)) {
+			player.moveEntityRelativ(new Vector3f(0,0,Constants.SHIP_MOVEMENT_SPPED));
+		}
+		
+		if (inputs.keyPresse(GLFW_KEY_SPACE)) {
+			LOGGER.trace("SHOOT!");
+			
+		}
 	}
 
 	private static Map<EntityType, List<Entity>> initEntities() {
@@ -142,7 +175,7 @@ public class MainGameLoop {
 
 	private static void loadOpenGlSettings() {
 		LOGGER.trace("Loading OGL-Settings");
-		glClearColor(0.0f, 0.0f, 0.0f, 1);
+		glClearColor(1.0f, 1.0f, 1.0f, 1);
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		glEnable(GL_DEPTH_TEST);

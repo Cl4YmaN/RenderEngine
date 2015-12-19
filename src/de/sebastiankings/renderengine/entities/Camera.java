@@ -7,6 +7,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import de.sebastiankings.renderengine.engine.DisplayManager;
+import de.sebastiankings.renderengine.utils.ServiceFunctions;
 
 /**
  * Created by bryan on 28.10.2015.
@@ -49,18 +50,8 @@ public class Camera {
 	}
 
 	public void incrementTheta(float dTheta) {
-		float newTheta = clamp(MIN_THETA, MAX_THETA, this.theta - dTheta);
+		float newTheta = ServiceFunctions.clamp(MIN_THETA, MAX_THETA, this.theta - dTheta);
 		this.theta = newTheta;
-	}
-
-	private float clamp(float lower, float upper, float value) {
-		if (value < lower) {
-			return lower;
-		}
-		if (value > upper) {
-			return upper;
-		}
-		return value;
 	}
 
 	public void incrementPhi(float dPhi) {
@@ -116,7 +107,7 @@ public class Camera {
 	}
 
 	public void updateViewMatrix() {
-//		lookDir = getCurrentLookDirection().negate();
+		lookDir = getCurrentLookDirection().negate();//
 		Vector3f lookAt = new Vector3f(camPos).add(new Vector3f(new Vector3f(lookDir)));
 		viewMatrix = new Matrix4f().lookAt(camPos, lookAt, DEFAULT_UP);
 	}

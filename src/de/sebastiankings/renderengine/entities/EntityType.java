@@ -4,7 +4,9 @@ public enum EntityType {
 
 	TRASHBIN("res/meshes/trashbin/"),
 	FLOOR("res/meshes/floor/"),
-	GUMBA("res/meshes/gumba/");
+	GUMBA("res/meshes/gumba/"),
+	LASER("res/meshes/laser/"),
+	SHIP("res/meshes/ship/");
 
 	/**
 	 * Path to DataFolder 

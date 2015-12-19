@@ -80,11 +80,26 @@ public class Entity extends BaseEntity {
 		shader.stop();
 	}
 
-	public void moveEntity(Vector3f move) {
+	public void moveEntityRelativ(Vector3f move) {
+		this.entityState.changeRelativPosition(move);
+		updateModelMatrix();
+	}
+	
+	public void moveEntityGlobal(Vector3f move) {
 		this.entityState.getCurrentPosition().add(move);
 		updateModelMatrix();
 	}
 
+	public void rotateX(float roation) {
+		this.entityState.incrementRotationX(roation);
+		updateModelMatrix();
+	}
+	
+	public void rotateY(float roation) {
+		this.entityState.incrementRotationY(roation);
+		updateModelMatrix();
+	}
+	
 	public void rotateZ(float roation) {
 		this.entityState.incrementRotationZ(roation);
 		updateModelMatrix();
@@ -92,8 +107,9 @@ public class Entity extends BaseEntity {
 	
 	private void updateModelMatrix(){
 		Matrix4f mm = new Matrix4f();
-		mm.rotateZ(entityState.getRoationZ());
-		mm.translate(entityState.getCurrentPosition());
+		Vector3f position = new Vector3f(entityState.getCurrentPosition()).add(entityState.getRelativePosition());
+		mm.translate(position);
+		mm.rotateXYZ(this.entityState.getRotationX(), this.entityState.getRotationY(), this.entityState.getRotationZ());
 		this.modelMatrix = mm;
 	}
 

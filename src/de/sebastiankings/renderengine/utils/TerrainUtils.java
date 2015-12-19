@@ -27,7 +27,7 @@ public class TerrainUtils {
 				-halfWidth, 0.0f, -length,
 				halfWidth, 0.0f, -length };
 
-		float[] textures = { 0.0f, 0.0f, 0.0f, 1.0f, length / halfWidth, 0.0f, length / halfWidth, 1.0f, };
+		float[] textures = { 0.0f, 0.0f, 0.0f, 1.0f, (float) (length * 0.8 / halfWidth), 0.0f, (float) (length * 0.8/ halfWidth), 1.0f, };
 
 		float[] normals = { 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f };
 
