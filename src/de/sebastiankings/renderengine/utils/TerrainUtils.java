@@ -12,28 +12,29 @@ public class TerrainUtils {
 
 	public static Terrain generateTerrain(float width, float length) {
 		LOGGER.debug("Generating Terrain");
+		float terrainHeight = -15f;
 		float halfWidth = width / 2;
-//		float[] vertices = {
-//				// frontline
-//				-halfWidth, 0.0f, 0.0f, halfWidth, 0.0f, 0.0f,
-//				// horizontLine
-//				-halfWidth, 0.0f, -length, halfWidth, 0.0f, -length, };
-		
+		// float[] vertices = {
+		// // frontline
+		// -halfWidth, 0.0f, 0.0f, halfWidth, 0.0f, 0.0f,
+		// // horizontLine
+		// -halfWidth, 0.0f, -length, halfWidth, 0.0f, -length, };
+
 		float[] vertices = {
 				// frontline
-				-halfWidth, 0.0f, 0.0f,
-				halfWidth, 0.0f, 0.0f,
+				-halfWidth, terrainHeight, 0.0f, halfWidth, terrainHeight, 0.0f,
 				// horizontLine
-				-halfWidth, 0.0f, -length,
-				halfWidth, 0.0f, -length };
+				-halfWidth, terrainHeight, -length, halfWidth, terrainHeight, -length };
 
-		float[] textures = { 0.0f, 0.0f, 0.0f, 1.0f, (float) (length * 0.8 / halfWidth), 0.0f, (float) (length * 0.8/ halfWidth), 1.0f, };
+		// float[] textures = { 0.0f, 0.0f, 0.0f, 1.0f, (float) (length * 0.8 /
+		// halfWidth), 0.0f, (float) (length * 0.8/ halfWidth), 1.0f, };
+		float[] textures = { 0.0f, 0.0f, 0.0f, 1.0f, 10, 0.0f, 10, 1.0f, };
 
 		float[] normals = { 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f };
 
 		int[] indices = { 0, 1, 3, 0, 3, 2 };
 		Model terrainModel = LoaderUtils.loadTerrainVAO(vertices, textures, normals, indices);
-		Texture terrainTexture = LoaderUtils.loadTexture("res/terrain/stars.png");
+		Texture terrainTexture = LoaderUtils.loadTexture("res/terrain/stars2.png");
 		Terrain result = new Terrain(terrainModel, terrainTexture);
 		LOGGER.debug("Terrain generated");
 		return result;

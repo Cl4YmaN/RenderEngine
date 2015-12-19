@@ -35,6 +35,7 @@ import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.system.libffi.Closure;
 
 import de.sebastiankings.renderengine.bo.Inputs;
+import de.sebastiankings.renderengine.bo.Shot;
 import de.sebastiankings.renderengine.engine.DisplayManager;
 import de.sebastiankings.renderengine.entities.Camera;
 import de.sebastiankings.renderengine.entities.Entity;
@@ -44,6 +45,7 @@ import de.sebastiankings.renderengine.entities.PointLight;
 import de.sebastiankings.renderengine.shaders.EntityShaderProgram;
 import de.sebastiankings.renderengine.shaders.TerrainShaderProgramm;
 import de.sebastiankings.renderengine.terrain.Terrain;
+import de.sebastiankings.renderengine.utils.ServiceFunctions;
 import de.sebastiankings.renderengine.utils.TerrainUtils;
 
 public class MainGameLoop {
@@ -58,54 +60,46 @@ public class MainGameLoop {
 	private static long windowId;
 	private static Inputs inputs;
 	private static Camera camera;
-	
+
 	private static EntityShaderProgram entityShader;
 	private static TerrainShaderProgramm terrainShader;
-	
+
 	private static Entity player;
-	private static List<Entity> shots;
-	
+
+	private static PointLight light;
+	private static Terrain terrain;
+	private static List<Shot> shots = new ArrayList<>();
+	private static long lastShot;
+	private static ArrayList<Entity> entities;
+
 	public static void main(String[] args) {
 
 		try {
 			// Setup window
 			init();
 
-			PointLight light = new PointLight(new Vector3f(1000, 1000, 0), new Vector3f(0.5f, 0.5f, 0.5f), new Vector3f(1.0f, 1.0f, 1.0f), new Vector3f(1.0f, 1.0f, 1.0f));
-			
+			light = new PointLight(new Vector3f(1000, 1000, 0), new Vector3f(0.5f, 0.5f, 0.5f), new Vector3f(1.0f, 1.0f, 1.0f), new Vector3f(1.0f, 1.0f, 1.0f));
+
 			loadOpenGlSettings();
 			inputs = new Inputs();
 			inputs.registerInputs(DisplayManager.getWindow());
-			ArrayList<Entity> entities = new ArrayList<Entity>();
+			entities = new ArrayList<Entity>();
 			player = EntityFactory.createEntity(EntityType.SHIP);
-			player.moveEntityGlobal(new Vector3f(0,1.5f,0));
+			player.moveEntityGlobal(new Vector3f(0, 1.5f, 0));
 			entities.add(player);
 
-			Terrain terrain = TerrainUtils.generateTerrain(300f, 10000f);
+			terrain = TerrainUtils.generateTerrain(300f, 10000f);
+
 			
-			
-			Vector3f movement = new Vector3f(0,0,-0.05f);
-			
+
 			LOGGER.info("Start GameLoop");
 			long lastStartTime = System.currentTimeMillis();
 			while (glfwWindowShouldClose(windowId) == GL_FALSE) {
-				// Tim
 				long deltaTime = System.currentTimeMillis() - lastStartTime;
 				lastStartTime = System.currentTimeMillis();
-				// Clear framebuffer
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				handleInputs();
-				camera.updateViewMatrix();
-				//Shading Terrain
-				terrain.render(terrainShader, camera, light);
-				//Shading entitys
-				for (Entity entity : entities) {
-					if (entity.showEntity()) {
-						entity.render(0.0f, entityShader, camera, light);
-					}
-					entity.moveEntityGlobal(movement);
-				}
-				camera.move(movement);
+				handleInputs(deltaTime);
+				doGameLogic(deltaTime,lastStartTime);
+				render(deltaTime);				
 				DisplayManager.updateDisplay();
 			}
 			LOGGER.info("Ending Gameloop! Cleaning Up");
@@ -122,60 +116,106 @@ public class MainGameLoop {
 		}
 	}
 
-	private static void init(){
+	private static void init() {
 		LOGGER.info("Initialize Game");
 		windowId = DisplayManager.createDisplay();
 		camera = new Camera();
 		DisplayManager.setCamera(camera);
 		initShaderProgramms();
 	}
-	
-	private static void initShaderProgramms(){
+
+	private static void initShaderProgramms() {
 		entityShader = new EntityShaderProgram("res/shaders/entity/vertexShader.glsl", "res/shaders/entity/fragmentShader.glsl");
 		terrainShader = new TerrainShaderProgramm("res/shaders/terrain/vertexShader.glsl", "res/shaders/terrain/fragmentShader.glsl");
 	}
-	private static void handleInputs() {
+
+	private static void handleInputs(long deltaTime) {
 		if (inputs.keyPresse(GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose(DisplayManager.getWindow(), GL_TRUE);
 		}
 		if (inputs.keyPresse(GLFW_KEY_A)) {
 			player.getEntityState().setRotationZ((float) Math.toRadians(10.0d));
-			player.moveEntityRelativ(new Vector3f(-Constants.SHIP_MOVEMENT_SPPED,0,0));
+			Vector3f movement = ServiceFunctions.createMovementVector(-Constants.SHIP_MOVEMENT_SPPED, 0, 0, deltaTime);
+			player.moveEntityRelativ(movement);
 		}
 		if (inputs.keyPresse(GLFW_KEY_D)) {
 			player.getEntityState().setRotationZ((float) Math.toRadians(-10.0d));
-			player.moveEntityRelativ(new Vector3f(Constants.SHIP_MOVEMENT_SPPED,0,0));
+			Vector3f movement = ServiceFunctions.createMovementVector(Constants.SHIP_MOVEMENT_SPPED, 0, 0, deltaTime);
+			player.moveEntityRelativ(movement);
 		}
-		//CLEAR ROTATION IF NOT LEFT OR RIGHT
-		if(!inputs.keyPresse(GLFW_KEY_A) || !inputs.keyPresse(GLFW_KEY_D)){
+		// CLEAR ROTATION IF NOT LEFT OR RIGHT
+		if (!inputs.keyPresse(GLFW_KEY_A) && !inputs.keyPresse(GLFW_KEY_D)) {
 			player.getEntityState().setRotationZ((float) Math.toRadians(0.0d));
 		}
 		if (inputs.keyPresse(GLFW_KEY_W)) {
-			player.moveEntityRelativ(new Vector3f(0,0,-Constants.SHIP_MOVEMENT_SPPED));
+			Vector3f movement = ServiceFunctions.createMovementVector(0, 0, -Constants.SHIP_MOVEMENT_SPPED, deltaTime);
+			player.moveEntityRelativ(movement);
 		}
 		if (inputs.keyPresse(GLFW_KEY_S)) {
-			player.moveEntityRelativ(new Vector3f(0,0,Constants.SHIP_MOVEMENT_SPPED));
+			Vector3f movement = ServiceFunctions.createMovementVector(0, 0, Constants.SHIP_MOVEMENT_SPPED, deltaTime);
+			player.moveEntityRelativ(movement);
 		}
-		
+
 		if (inputs.keyPresse(GLFW_KEY_SPACE)) {
-			LOGGER.trace("SHOOT!");
-			
+			shoot();
+
 		}
 	}
 
-	private static Map<EntityType, List<Entity>> initEntities() {
-		// Map<EntityType,List<Entity>> result = new
-		// HashMap<EntityType,List<Entity>>();
-		// Entity ball = EntityFactory.createEntity(EntityType.GUMBA);
-		// Entity ball2 = EntityFactory.createEntity(EntityType.GUMBA);
-		// entities.add(ball);
-		// entities.add(ball2);
-		return null;
+	private static void doGameLogic(long deltaTime, long currentTime){
+		//Animate and validate Shot
+		List<Shot> invalidShots = new ArrayList<Shot>();
+		for (Shot shot : shots) {
+			if(shot.validate(currentTime)){
+				shot.getEntity().moveEntityGlobal(new Vector3f(0,0,-Constants.SHOT_MOVEMENT_SPEED));
+			} else {
+				shot.getEntity().setShowEntity(false);
+				invalidShots.add(shot);
+			}
+		}
+		for (Shot shot : invalidShots) {
+			shots.remove(shot);
+		}
+		
+	}
+	
+	private static void render(long deltaTime){
+		Vector3f movement = ServiceFunctions.createMovementVector(0, 0, -Constants.LEVEL_MOVEMENT_SPEED, deltaTime);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		camera.updateViewMatrix();
+		// Shading Terrain
+		terrain.render(terrainShader, camera, light);
+		// Shading entitys
+		for (Entity entity : entities) {
+			if (entity.showEntity()) {
+				entity.render(0.0f, entityShader, camera, light);
+			}
+			entity.moveEntityGlobal(movement);
+		}
+		camera.move(movement);
+		light.getLightPos().add(movement);
+	}
+	
+
+	private static void shoot() {
+		long currentTimeMillis = System.currentTimeMillis();
+		long shotDelta = currentTimeMillis - lastShot;
+		if (shotDelta >= Constants.SHOT_COOLDOWN) {
+			Entity shotEntity = EntityFactory.createEntity(EntityType.LASER);
+			Shot shot = new Shot(shotEntity, currentTimeMillis);
+			shot.getEntity().moveEntityGlobal(new Vector3f(player.getEntityState().getRealPosition()).add(Constants.SHOT_OFFSET));
+			shots.add(shot);
+			entities.add(shotEntity);
+			lastShot = currentTimeMillis;
+			LOGGER.trace("Shot fired");
+		} else {
+			LOGGER.trace("Cooldown");
+		}
 	}
 
 	private static void loadOpenGlSettings() {
 		LOGGER.trace("Loading OGL-Settings");
-		glClearColor(1.0f, 1.0f, 1.0f, 1);
+		glClearColor(0.0f, 0.0f, 0.0f, 1);
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		glEnable(GL_DEPTH_TEST);

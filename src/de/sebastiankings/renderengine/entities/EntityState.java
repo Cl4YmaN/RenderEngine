@@ -91,5 +91,13 @@ public class EntityState {
 		this.relativePosition = relativePosition;
 		validateRelativPosition();
 	}
+	
+	/**
+	 * Returns GlobalPosition + Relative Position
+	 * @return
+	 */
+	public Vector3f getRealPosition(){
+		return new Vector3f(currentPosition).add(relativePosition);
+	}
 
 }

@@ -28,7 +28,7 @@ public class EntityFactory {
 		Entity result = null;
 		if (entityCache.containsKey(type)) {
 			LOGGER.debug("Entity with type " + type.name() + " already loaded! Using cached Version!");
-			return entityCache.get(type);
+			return entityCache.get(type).clone();
 		}
 		OBJData data = OBJLoader.loadModelFromObj(type.getFolderPath());
 		OBJEntity objEntity = data.getEntityData();

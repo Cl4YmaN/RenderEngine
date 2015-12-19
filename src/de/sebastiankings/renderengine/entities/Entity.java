@@ -26,6 +26,12 @@ public class Entity extends BaseEntity {
 	public Entity(EntityType type, Model model, Matrix4f modelMatrix) {
 		super(type, model, modelMatrix);
 	}
+	
+	private Entity(EntityType type, Model model, Texture texture) {
+		super(type, model, new Matrix4f());
+		this.diffuseTexture = texture;
+	}
+
 
 	public Texture getTexture() {
 		return diffuseTexture;
@@ -33,6 +39,10 @@ public class Entity extends BaseEntity {
 
 	public void setTexture(Texture texture) {
 		this.diffuseTexture = texture;
+	}
+	
+	public Entity clone(){
+		return new Entity(this.type,this.model,this.diffuseTexture);
 	}
 
 	@Override

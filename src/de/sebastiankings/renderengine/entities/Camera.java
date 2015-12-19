@@ -9,9 +9,6 @@ import org.joml.Vector3f;
 import de.sebastiankings.renderengine.engine.DisplayManager;
 import de.sebastiankings.renderengine.utils.ServiceFunctions;
 
-/**
- * Created by bryan on 28.10.2015.
- */
 public class Camera {
 
 	
@@ -27,13 +24,13 @@ public class Camera {
 	private Vector3f camPos = new Vector3f();
 	private Vector3f lookDir = new Vector3f();
 
-	private float theta = (float) Math.PI * 0.17f;
+	private float theta = (float) Math.PI * 0.3f;
 	private float phi = (float) Math.PI * 0.0f;
 	private float camDist = 28.0f;
 
 	public Camera() {
 		this.projectionMatrix = createProjectionMatrix(1.0f, 2000.0f);
-		this.camPos = new Vector3f(0, 50, 50);
+		this.camPos = new Vector3f(0, 150, 50);
 		this.lookDir = new Vector3f(0,-1,0);
 		LOGGER.debug("Campos: " + camPos.toString(FORMAT));
 		LOGGER.debug("LookDir: " + lookDir.toString(FORMAT));
