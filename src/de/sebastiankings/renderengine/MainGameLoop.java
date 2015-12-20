@@ -24,14 +24,15 @@ import org.lwjgl.system.libffi.Closure;
 
 import de.sebastiankings.renderengine.bo.Game;
 import de.sebastiankings.renderengine.bo.Inputs;
-import de.sebastiankings.renderengine.bo.Player;
-import de.sebastiankings.renderengine.bo.Shot;
 import de.sebastiankings.renderengine.engine.DisplayManager;
 import de.sebastiankings.renderengine.entities.Camera;
 import de.sebastiankings.renderengine.entities.Entity;
 import de.sebastiankings.renderengine.entities.EntityFactory;
 import de.sebastiankings.renderengine.entities.EntityType;
 import de.sebastiankings.renderengine.entities.PointLight;
+import de.sebastiankings.renderengine.entities.types.Enemy;
+import de.sebastiankings.renderengine.entities.types.Player;
+import de.sebastiankings.renderengine.entities.types.Shot;
 import de.sebastiankings.renderengine.shaders.EntityShaderProgram;
 import de.sebastiankings.renderengine.shaders.TerrainShaderProgramm;
 import de.sebastiankings.renderengine.terrain.Terrain;
@@ -52,20 +53,13 @@ public class MainGameLoop {
 	private static Game game;
 
 	private static Terrain terrain;
-	private static List<Shot> shots = new ArrayList<>();
-	private static long lastShot;
-	private static ArrayList<Entity> entities;
 
 	public static void main(String[] args) {
 
 		try {
 			// Setup window
 			init();
-			entities = new ArrayList<Entity>();
-
-			entities.add(game.getPlayer().getEntity());
-
-			terrain = TerrainUtils.generateTerrain(300f, 10000f);
+			initEnemyEntites();
 
 			LOGGER.info("Start GameLoop");
 			long lastStartTime = System.currentTimeMillis();
@@ -98,11 +92,12 @@ public class MainGameLoop {
 		Inputs inputs = new Inputs();
 		inputs.registerInputs(DisplayManager.getWindow());
 		// PlayerModel laden
-		Player player = new Player(EntityFactory.createEntity(EntityType.GUMBA));
+		Player player = new Player(EntityFactory.createEntity(EntityType.SHIP));
 		player.getEntity().moveEntityGlobal(new Vector3f(0, 1.5f, 0));
 
 		PointLight sun = new PointLight(new Vector3f(1000, 1000, 0), new Vector3f(0.5f, 0.5f, 0.5f), new Vector3f(1.0f, 1.0f, 1.0f), new Vector3f(1.0f, 1.0f, 1.0f));
 		game = new Game(player, new Camera(), inputs, sun);
+		game.setTerrain(TerrainUtils.generateTerrain(300f, 10000f));
 		initShaderProgramms();
 	}
 
@@ -112,6 +107,39 @@ public class MainGameLoop {
 
 	}
 
+	private static void initEnemyEntites() {
+		List<Enemy> enemies = new ArrayList<>();
+		// Level generate Random Enemys
+		float enemyDensity = 1 / 20f;
+		float enemyStartOffset = 200;
+		float enemyEndOffset = 400;
+		LOGGER.trace("Calculating enemy Count!");
+		float realTerrainLength = game.getTerrain().getLength() - enemyStartOffset - enemyEndOffset;
+		LOGGER.trace("Real Terrain Length: " + realTerrainLength);
+		float distanceBetweenEnemy = realTerrainLength * enemyDensity;
+		LOGGER.trace("Units between enemy: " + distanceBetweenEnemy);
+		int enemyCount = (int) (realTerrainLength / distanceBetweenEnemy);
+
+		LOGGER.debug("Enemy Count " + enemyCount);
+		for (int i = 0; i < enemyCount; i++) {
+			Entity temp = EntityFactory.createEntity(EntityType.GUMBA);
+			temp.rotateY(Constants.RAD_90);
+			Vector3f spawn = new Vector3f(0, 0, -(enemyStartOffset + i * distanceBetweenEnemy));
+			LOGGER.trace("Spawnpoint: " + spawn.toString(Constants.DEFAULT_FLOAT_FORMAT));
+			Enemy next = new Enemy(temp, spawn, new Vector3f());
+			enemies.add(next);
+		}
+		// Level generate Special Enemys
+
+		game.setEnemies(enemies);
+	}
+
+	/**
+	 * Method to Handle all user Inputs,
+	 * 
+	 * @param deltaTime
+	 *            Timedifference to lastFrame
+	 */
 	private static void handleInputs(long deltaTime) {
 		Inputs inputs = game.getInputs();
 		Entity playerEntity = game.getPlayer().getEntity();
@@ -140,11 +168,22 @@ public class MainGameLoop {
 			Vector3f movement = ServiceFunctions.createMovementVector(0, 0, Constants.SHIP_MOVEMENT_SPPED, deltaTime);
 			playerEntity.moveEntityRelativ(movement);
 		}
+		// EXPERIMENTAL!!!!
 		if (inputs.keyPresse(GLFW_KEY_F)) {
-			if(game.allowGlobalMovement){
-				game.allowGlobalMovement = false;				
-			}else {
+			if (game.allowGlobalMovement) {
+				game.allowGlobalMovement = false;
+			} else {
 				game.allowGlobalMovement = true;
+			}
+		}
+
+		if (inputs.keyPresse(GLFW_KEY_C)) {
+			if (game.showEgo) {
+				game.showEgo = false;
+				game.getCamera().loadDefaultCamSettings(game.getPlayer().getEntity().getEntityState().getCurrentPosition());
+			} else {
+				game.showEgo = true;
+				game.getCamera().loadAlternativCamSettings(game.getPlayer().getEntity().getEntityState().getCurrentPosition());
 			}
 		}
 		if (inputs.keyPresse(GLFW_KEY_SPACE)) {
@@ -153,58 +192,80 @@ public class MainGameLoop {
 		}
 	}
 
+	/**
+	 * Method for global Movement, Shot (Movement and Validation), collision
+	 * Detections
+	 * 
+	 * @param deltaTime
+	 *            Time since last Frame
+	 * @param currentTime
+	 *            Current System Time at FrameStart
+	 */
 	private static void doGameLogic(long deltaTime, long currentTime) {
+		Vector3f globalMovement = ServiceFunctions.createMovementVector(0, 0, -Constants.LEVEL_MOVEMENT_SPEED, deltaTime);
+		// Model Movements
+		// Move Shots
 		// Animate and validate Shot
 		List<Shot> invalidShots = new ArrayList<Shot>();
-		for (Shot shot : shots) {
+		for (Shot shot : game.getShots()) {
 			if (shot.validate(currentTime)) {
-				shot.getEntity().moveEntityGlobal(new Vector3f(0, 0, -Constants.SHOT_MOVEMENT_SPEED));
+				shot.getEntity().moveEntityGlobal(new Vector3f(globalMovement).add(0, 0, -Constants.SHOT_MOVEMENT_SPEED));
 			} else {
 				shot.getEntity().setShowEntity(false);
 				invalidShots.add(shot);
 			}
 		}
 		for (Shot shot : invalidShots) {
-			shots.remove(shot);
+			game.getShots().remove(shot);
+		}
+		// Move Player (global)
+		if (game.allowGlobalMovement) {
+			game.getCamera().move(globalMovement);
+			game.getSun().getLightPos().add(globalMovement);
+			game.getPlayer().getEntity().moveEntityGlobal(globalMovement);
 		}
 
 	}
 
 	private static void render(long deltaTime) {
-		Vector3f movement = ServiceFunctions.createMovementVector(0, 0, -Constants.LEVEL_MOVEMENT_SPEED, deltaTime);
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		Camera camera = game.getCamera();
 		camera.updateViewMatrix();
 		// Shading Terrain
-		terrain.render(game.getTerrainShader(), camera, game.getSun());
-		// Shading entitys
-		for (Entity entity : entities) {
+		game.getTerrain().render(game.getTerrainShader(), camera, game.getSun());
+		// Shading entities
+		// Render enemies
+		for (Enemy enemy : game.getEnemies()) {
+			Entity entity = enemy.getEntity();
 			if (entity.showEntity()) {
 				entity.render(0.0f, game.getEntityShader(), camera, game.getSun());
 			}
-			if (game.allowGlobalMovement) {
-				entity.moveEntityGlobal(movement);
+			if (game.allowEnemyMovement) {
+				// Moving
 			}
 		}
-		if (game.allowGlobalMovement) {
-			camera.move(movement);
-			game.getSun().getLightPos().add(movement);
+		// Render Shots
+		for (Shot shot : game.getShots()) {
+			Entity entity = shot.getEntity();
+			if (entity.showEntity()) {
+				entity.render(0.0f, game.getEntityShader(), camera, game.getSun());
+			}
 		}
+		// Render Player
+		game.getPlayer().getEntity().render(deltaTime, game.getEntityShader(), game.getCamera(), game.getSun());
 	}
 
 	private static void shoot() {
 		long currentTimeMillis = System.currentTimeMillis();
-		long shotDelta = currentTimeMillis - lastShot;
+		long shotDelta = currentTimeMillis - game.lastShotFired;
 		if (shotDelta >= Constants.SHOT_COOLDOWN) {
-			Entity shotEntity = EntityFactory.createEntity(EntityType.TRASHBIN);
+			Entity shotEntity = EntityFactory.createEntity(EntityType.LASER);
 			Shot shot = new Shot(shotEntity, currentTimeMillis);
 			shot.getEntity().moveEntityGlobal(new Vector3f(game.getPlayer().getEntity().getEntityState().getRealPosition()).add(Constants.SHOT_OFFSET));
-			shots.add(shot);
-			entities.add(shotEntity);
-			lastShot = currentTimeMillis;
+			game.getShots().add(shot);
+			game.lastShotFired = currentTimeMillis;
 			LOGGER.trace("Shot fired");
-		} else {
-			LOGGER.trace("Cooldown");
 		}
 	}
 

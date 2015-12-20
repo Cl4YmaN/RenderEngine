@@ -1,4 +1,4 @@
-package de.sebastiankings.renderengine.bo;
+package de.sebastiankings.renderengine.entities.types;
 
 import de.sebastiankings.renderengine.entities.Entity;
 

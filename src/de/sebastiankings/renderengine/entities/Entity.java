@@ -19,19 +19,18 @@ public class Entity extends BaseEntity {
 
 	private Texture diffuseTexture;
 
-	public Entity(EntityType type, Model model) {
-		super(type, model, new Matrix4f());
+	public Entity(EntityType type, Model model, EntityDimensions dimensions) {
+		super(type, model, new Matrix4f(), dimensions);
 	}
 
-	public Entity(EntityType type, Model model, Matrix4f modelMatrix) {
-		super(type, model, modelMatrix);
+	public Entity(EntityType type, Model model, Matrix4f modelMatrix, EntityDimensions dimensions) {
+		super(type, model, modelMatrix, dimensions);
 	}
-	
-	private Entity(EntityType type, Model model, Texture texture) {
-		super(type, model, new Matrix4f());
+
+	private Entity(EntityType type, Model model, Texture texture, EntityDimensions dimensions) {
+		super(type, model, new Matrix4f(), dimensions);
 		this.diffuseTexture = texture;
 	}
-
 
 	public Texture getTexture() {
 		return diffuseTexture;
@@ -40,9 +39,9 @@ public class Entity extends BaseEntity {
 	public void setTexture(Texture texture) {
 		this.diffuseTexture = texture;
 	}
-	
-	public Entity clone(){
-		return new Entity(this.type,this.model,this.diffuseTexture);
+
+	public Entity clone() {
+		return new Entity(this.type, this.model, this.diffuseTexture, this.dimensions);
 	}
 
 	@Override
@@ -94,7 +93,7 @@ public class Entity extends BaseEntity {
 		this.entityState.changeRelativPosition(move);
 		updateModelMatrix();
 	}
-	
+
 	public void moveEntityGlobal(Vector3f move) {
 		this.entityState.getCurrentPosition().add(move);
 		updateModelMatrix();
@@ -104,18 +103,18 @@ public class Entity extends BaseEntity {
 		this.entityState.incrementRotationX(roation);
 		updateModelMatrix();
 	}
-	
+
 	public void rotateY(float roation) {
 		this.entityState.incrementRotationY(roation);
 		updateModelMatrix();
 	}
-	
+
 	public void rotateZ(float roation) {
 		this.entityState.incrementRotationZ(roation);
 		updateModelMatrix();
 	}
-	
-	private void updateModelMatrix(){
+
+	private void updateModelMatrix() {
 		Matrix4f mm = new Matrix4f();
 		Vector3f position = new Vector3f(entityState.getCurrentPosition()).add(entityState.getRelativePosition());
 		mm.translate(position);

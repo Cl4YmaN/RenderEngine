@@ -1,10 +1,13 @@
 package de.sebastiankings.renderengine.bo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.sebastiankings.renderengine.entities.Camera;
-import de.sebastiankings.renderengine.entities.Entity;
 import de.sebastiankings.renderengine.entities.PointLight;
+import de.sebastiankings.renderengine.entities.types.Enemy;
+import de.sebastiankings.renderengine.entities.types.Player;
+import de.sebastiankings.renderengine.entities.types.Shot;
 import de.sebastiankings.renderengine.shaders.EntityShaderProgram;
 import de.sebastiankings.renderengine.shaders.TerrainShaderProgramm;
 import de.sebastiankings.renderengine.terrain.Terrain;
@@ -15,7 +18,8 @@ public class Game {
 	private Player player;
 	private Terrain terrain;
 	private List<Shot> shots;
-	private List<Entity> enemies;
+	
+	private List<Enemy> enemies;
 
 	private PointLight sun;
 	
@@ -26,11 +30,12 @@ public class Game {
 	public boolean allowShipMovement = true;
 	public boolean allowEnemyMovement = true;
 	public boolean allowGlobalMovement = true;
+	public boolean showEgo = false;
 	public boolean gamePaused = false;
 	public boolean doGameLogics = true;
 
 	// public timestamps
-	public boolean lastShotFired;
+	public long lastShotFired;
 
 	// Shaderprogramms
 	// Entity
@@ -44,6 +49,8 @@ public class Game {
 		this.setCamera(camera);
 		this.setInputs(inputs);
 		this.setSun(sun);
+		this.shots = new ArrayList<>();
+		this.setEnemies(new ArrayList<>());
 	}
 
 	public EntityShaderProgram getEntityShader() {
@@ -108,6 +115,14 @@ public class Game {
 
 	public void setSun(PointLight sun) {
 		this.sun = sun;
+	}
+
+	public List<Enemy> getEnemies() {
+		return enemies;
+	}
+
+	public void setEnemies(List<Enemy> enemies) {
+		this.enemies = enemies;
 	}
 
 }

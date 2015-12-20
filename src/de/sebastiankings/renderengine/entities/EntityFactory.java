@@ -1,8 +1,6 @@
 package de.sebastiankings.renderengine.entities;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -61,7 +59,9 @@ public class EntityFactory {
 			texture = LoaderUtils.loadTexture(textureName);
 			LOGGER.debug("Texture loaded");
 		}
-		result = new Entity(type, model);
+		//TEST_DIMENSIONS
+		EntityDimensions defaultDimensions = new EntityDimensions(10, 10, 10);
+		result = new Entity(type, model, defaultDimensions);
 		result.setTexture(texture);
 		LOGGER.debug("New entity created");
 		addEntityToCache(result);
@@ -70,7 +70,7 @@ public class EntityFactory {
 
 	private static void addEntityToCache(Entity e){
 		entityCache.put(e.getType(), e);
-		LOGGER.debug("Added entity with type " + e.getType() + "to cache");
+		LOGGER.debug("Added entity with type " + e.getType() + " to cache");
 	}
 	
 	private static void init() {

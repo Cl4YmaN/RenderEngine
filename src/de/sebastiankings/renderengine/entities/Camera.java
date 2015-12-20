@@ -1,11 +1,10 @@
 package de.sebastiankings.renderengine.entities;
 
-import java.text.DecimalFormat;
-
 import org.apache.log4j.Logger;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import de.sebastiankings.renderengine.Constants;
 import de.sebastiankings.renderengine.engine.DisplayManager;
 import de.sebastiankings.renderengine.utils.ServiceFunctions;
 
@@ -15,10 +14,8 @@ public class Camera {
 	private static final Logger LOGGER = Logger.getLogger(Camera.class);
 	private static final float FOV = 70;
 	private static final Vector3f DEFAULT_UP = new Vector3f(0, 1, 0);
-	private static final DecimalFormat FORMAT = new DecimalFormat("#0.0000");
 	private static final float MOVE_FACTOR = 2f;
-	private static final float MIN_THETA = (float) (Math.PI / 2.0) * -1.0f + 0.001f;
-	private static final float MAX_THETA = (float) (Math.PI / 2.0) * 1.0f - 0.001f;
+
 	private Matrix4f viewMatrix = new Matrix4f();
 	private Matrix4f projectionMatrix = new Matrix4f();
 	private Vector3f camPos = new Vector3f();
@@ -29,13 +26,25 @@ public class Camera {
 	private float camDist = 28.0f;
 
 	public Camera() {
-		this.projectionMatrix = createProjectionMatrix(1.0f, 2000.0f);
-		this.camPos = new Vector3f(0, 150, 50);
-		this.lookDir = new Vector3f(0,-1,0);
-		LOGGER.debug("Campos: " + camPos.toString(FORMAT));
-		LOGGER.debug("LookDir: " + lookDir.toString(FORMAT));
-		LOGGER.trace("");
+		loadDefaultCamSettings(new Vector3f(0,0,0));
+//		loadAlternativCamSettings(new Vector3f(0,0,0));
 		this.updateViewMatrix();
+	}
+	
+	public void loadDefaultCamSettings(Vector3f playerPosition){
+		this.projectionMatrix = createProjectionMatrix(1.0f, 2000.0f);
+		this.camPos = new Vector3f(0, 150, 50).add(playerPosition);
+		this.lookDir = new Vector3f(0,-1,0);
+		this.theta = (float) Math.PI * 0.3f;
+		this.phi = (float) Math.PI * 0.0f;
+	}
+	
+	public void loadAlternativCamSettings(Vector3f playerPositoin){
+		this.projectionMatrix = createProjectionMatrix(1.0f, 2000.0f);
+		this.camPos = new Vector3f(0, 10, 10).add(playerPositoin);
+		this.lookDir = new Vector3f(0,-1,0);
+		this.theta = (float) Math.PI * 0.1f;
+		this.phi = (float) Math.PI * 0.0f;
 	}
 
 	public Matrix4f getProjectionMatrix() {
@@ -47,7 +56,7 @@ public class Camera {
 	}
 
 	public void incrementTheta(float dTheta) {
-		float newTheta = ServiceFunctions.clamp(MIN_THETA, MAX_THETA, this.theta - dTheta);
+		float newTheta = ServiceFunctions.clamp(Constants.CAMERA_MIN_THETA, Constants.CAMERA_MAX_THETA, this.theta - dTheta);
 		this.theta = newTheta;
 	}
 

@@ -35,7 +35,7 @@ public class TerrainUtils {
 		int[] indices = { 0, 1, 3, 0, 3, 2 };
 		Model terrainModel = LoaderUtils.loadTerrainVAO(vertices, textures, normals, indices);
 		Texture terrainTexture = LoaderUtils.loadTexture("res/terrain/stars2.png");
-		Terrain result = new Terrain(terrainModel, terrainTexture);
+		Terrain result = new Terrain(terrainModel, terrainTexture, width, length);
 		LOGGER.debug("Terrain generated");
 		return result;
 	}

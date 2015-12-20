@@ -18,12 +18,18 @@ import de.sebastiankings.renderengine.shaders.TerrainShaderProgramm;
 import de.sebastiankings.renderengine.texture.Texture;
 
 public class Terrain {
+
+	private float width;
+	private float length;
+
 	private Model model;
 	private Texture texture;
 
-	public Terrain(Model model, Texture texture) {
+	public Terrain(Model model, Texture texture, float width, float length) {
 		this.model = model;
 		this.texture = texture;
+		this.width = width;
+		this.length = length;
 	}
 
 	public Model getModel() {
@@ -66,6 +72,14 @@ public class Terrain {
 		glBindVertexArray(0);
 
 		shader.stop();
+	}
+
+	public float getWidth() {
+		return width;
+	}
+
+	public float getLength() {
+		return length;
 	}
 
 }
