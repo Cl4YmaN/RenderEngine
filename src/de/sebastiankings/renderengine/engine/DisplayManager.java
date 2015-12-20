@@ -4,35 +4,21 @@ import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_DISABLED;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_A;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_D;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_S;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_W;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_DEBUG_CONTEXT;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
-import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
-import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
-import static org.lwjgl.glfw.GLFW.GLFW_REPEAT;
 import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
 import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
 import static org.lwjgl.glfw.GLFW.glfwDefaultWindowHints;
 import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
 import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
-import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
-import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetInputMode;
-import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
-import static org.lwjgl.glfw.GLFW.glfwSetScrollCallback;
-import static org.lwjgl.glfw.GLFW.glfwSetWindowPos;
-import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSize;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwShowWindow;
@@ -47,20 +33,13 @@ import static org.lwjgl.opengl.GL11.glGetString;
 import static org.lwjgl.opengl.GL11.glViewport;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-import java.nio.ByteBuffer;
-
 import org.apache.log4j.Logger;
-import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
 import org.lwjgl.glfw.GLFWWindowSizeCallback;
-import org.lwjgl.glfw.GLFWvidmode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GLUtil;
 import org.lwjgl.system.libffi.Closure;
-
-import de.sebastiankings.renderengine.entities.Camera;
 
 public class DisplayManager {
 
@@ -79,8 +58,6 @@ public class DisplayManager {
 	private static Closure debug;
 	// The window handle
 	private static long window;
-
-	private static Camera camera;
 
 	public static long getWindow() {
 		return window;
@@ -103,7 +80,7 @@ public class DisplayManager {
 		debug = GLUtil.setupDebugMessageCallback(); // after
 		LOGGER.debug("Your OpenGL version is " + glGetString(GL_VERSION));
 		return window;
-		
+
 	}
 
 	private static void initWindow() {
@@ -111,9 +88,6 @@ public class DisplayManager {
 		window = glfwCreateWindow(width, height, "Exercise 06 - Ghetto Soccer", glfwGetPrimaryMonitor(), NULL);
 		if (window == NULL)
 			throw new RuntimeException("Failed to create the GLFW window");
-
-		// Auflösung des primären Displays holen.
-		ByteBuffer vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
 		// Den GLFW Kontext aktuell machen.
 		glfwMakeContextCurrent(window);
@@ -136,13 +110,6 @@ public class DisplayManager {
 			@Override
 			public void invoke(long window, int width, int height) {
 				updateWidthHeight(width, height);
-			}
-		});
-
-		glfwSetScrollCallback(window, scrollCallback = new GLFWScrollCallback() {
-			@Override
-			public void invoke(long window, double xOffset, double dw) {
-				camera.setDist((float) dw);
 			}
 		});
 	}
@@ -184,9 +151,5 @@ public class DisplayManager {
 
 	public static void closeDisplay() {
 		glfwDestroyWindow(window);
-	}
-
-	public static void setCamera(Camera c) {
-		camera = c;
 	}
 }

@@ -20,6 +20,7 @@ public class StaticShaderProgram extends ShaderProgram {
 	private int location_lightColDiffuse;
 	private int location_lightColAmbient;
 	private int location_lightColSpecular;
+	private int location_lightAttenuation;
 
 	private int location_matEmission;
 	private int location_matAmbient;
@@ -54,6 +55,7 @@ public class StaticShaderProgram extends ShaderProgram {
 		location_lightColAmbient = super.getUniformLocation("lightColAmbient");
 		location_lightColDiffuse = super.getUniformLocation("lightColDiffuse");
 		location_lightColSpecular = super.getUniformLocation("lightColSpecular");
+		location_lightAttenuation = super.getUniformLocation("lightAttenuation");
 
 		location_matEmission = super.getUniformLocation("matEmission");
 		location_matAmbient = super.getUniformLocation("matAmbient");
@@ -75,6 +77,7 @@ public class StaticShaderProgram extends ShaderProgram {
 		super.loadVector(location_lightColAmbient, light.getLightColAmbient());
 		super.loadVector(location_lightColDiffuse, light.getLightColDiffuse());
 		super.loadVector(location_lightColSpecular, light.getLightColSpecular());
+		super.loadVector(location_lightAttenuation, light.getAttenuation());
 	}
 
 	public void loadTexture(){

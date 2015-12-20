@@ -18,12 +18,15 @@ uniform sampler2D texture1;
 uniform vec3 lightColAmbient;
 uniform vec3 lightColDiffuse;
 uniform vec3 lightColSpecular;
+uniform vec4 attenuation;
 
 
 
 
 vec4 shade(vec3 toLightVector, vec3 unitNormal, vec3 unitToCameraVector,vec3 matDiffuse, vec3 lightColAmbient, vec3 lightColDiffuse, vec3 lightColSpecular)
 {
+	float distance = length(toLightVector);
+	float attFactor = attenuation.x + (attenuation.y * (distance) + attenuation.z * distance * distance);
     vec3 unitLightVector = normalize(toLightVector);
     vec3 lightDirection = -unitLightVector;
     vec3 reflectedLightDirection = reflect(lightDirection, unitNormal);

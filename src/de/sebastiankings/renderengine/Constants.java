@@ -17,8 +17,9 @@ public class Constants {
 	public static final int MAX_SHOOTS_FIRED = 1;
 	public static final float PLAYER_MAX_RELATIV_DISTANCE_X = 40f;
 	public static final float PLAYER_MAX_RELATIV_DISTANCE_Y = 0;
-	public static final float PLAYER_MAX_RELATIV_DISTANCE_Z = 80f;
+	public static final float PLAYER_MAX_RELATIV_DISTANCE_Z = 100f;
 	public static final int SHOT_MAX_LIFE_TIME = 1000; //ms
+	public static final int LEVEL_RANDOM_ENEMY_COUNT = 50; //ms
 	
 	//ETC
 	public static final Vector3f SHOT_OFFSET = new Vector3f(0,0,-10);
