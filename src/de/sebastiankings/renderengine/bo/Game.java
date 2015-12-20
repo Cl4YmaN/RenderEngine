@@ -8,7 +8,9 @@ import de.sebastiankings.renderengine.entities.PointLight;
 import de.sebastiankings.renderengine.entities.types.Enemy;
 import de.sebastiankings.renderengine.entities.types.Player;
 import de.sebastiankings.renderengine.entities.types.Shot;
+import de.sebastiankings.renderengine.entities.types.Skybox;
 import de.sebastiankings.renderengine.shaders.EntityShaderProgram;
+import de.sebastiankings.renderengine.shaders.SkyboxShaderProgramm;
 import de.sebastiankings.renderengine.shaders.TerrainShaderProgramm;
 import de.sebastiankings.renderengine.terrain.Terrain;
 
@@ -17,6 +19,7 @@ public class Game {
 	// Special Entitys
 	private Player player;
 	private Terrain terrain;
+	private Skybox skybox;
 	private List<Shot> shots;
 	
 	private List<Enemy> enemies;
@@ -42,7 +45,8 @@ public class Game {
 	private EntityShaderProgram entityShader;
 	// Terrain
 	private TerrainShaderProgramm terrainShader;
-	// Water(?)
+	// Skybox
+	private SkyboxShaderProgramm skyboxShader;
 
 	public Game(Player player, Camera camera, Inputs inputs, PointLight sun) {
 		this.setPlayer(player);
@@ -123,6 +127,22 @@ public class Game {
 
 	public void setEnemies(List<Enemy> enemies) {
 		this.enemies = enemies;
+	}
+
+	public SkyboxShaderProgramm getSkyboxShader() {
+		return skyboxShader;
+	}
+
+	public void setSkyboxShader(SkyboxShaderProgramm skyboxShader) {
+		this.skyboxShader = skyboxShader;
+	}
+
+	public Skybox getSkybox() {
+		return skybox;
+	}
+
+	public void setSkybox(Skybox skybox) {
+		this.skybox = skybox;
 	}
 
 }

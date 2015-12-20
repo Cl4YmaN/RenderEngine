@@ -56,8 +56,11 @@ import de.sebastiankings.renderengine.entities.types.Enemy;
 import de.sebastiankings.renderengine.entities.types.Player;
 import de.sebastiankings.renderengine.entities.types.Shot;
 import de.sebastiankings.renderengine.shaders.EntityShaderProgram;
+import de.sebastiankings.renderengine.shaders.SkyboxShaderProgramm;
 import de.sebastiankings.renderengine.shaders.TerrainShaderProgramm;
+import de.sebastiankings.renderengine.utils.LoaderUtils;
 import de.sebastiankings.renderengine.utils.ServiceFunctions;
+import de.sebastiankings.renderengine.utils.SkyboxUtils;
 import de.sebastiankings.renderengine.utils.TerrainUtils;
 
 public class MainGameLoop {
@@ -135,12 +138,14 @@ public class MainGameLoop {
 		PointLight sun = new PointLight(new Vector3f(1000, 1000, 0), new Vector3f(0.5f, 0.5f, 0.5f), new Vector3f(1.0f, 1.0f, 1.0f), new Vector3f(1.0f, 1.0f, 1.0f));
 		game = new Game(player, new Camera(), inputs, sun);
 		game.setTerrain(TerrainUtils.generateTerrain(300f, 10000f));
+		game.setSkybox(SkyboxUtils.loadSkybox("res/skybox/test"));
 		initShaderProgramms();
 	}
 
 	private static void initShaderProgramms() {
 		game.setEntityShader(new EntityShaderProgram("res/shaders/entity/vertexShader.glsl", "res/shaders/entity/fragmentShader.glsl"));
 		game.setTerrainShader(new TerrainShaderProgramm("res/shaders/terrain/vertexShader.glsl", "res/shaders/terrain/fragmentShader.glsl"));
+		game.setSkyboxShader(new SkyboxShaderProgramm("res/shaders/skybox/vertexShader.glsl", "res/shaders/skybox/fragmentShader.glsl"));
 
 	}
 
@@ -187,30 +192,30 @@ public class MainGameLoop {
 		if (inputs.keyPresse(GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose(DisplayManager.getWindow(), GL_TRUE);
 		}
-		if(game.allowShipMovement){
-			
-		if (inputs.keyPresse(GLFW_KEY_A)) {
-			playerEntity.getEntityState().setRotationZ((float) Math.toRadians(10.0d));
-			Vector3f movement = ServiceFunctions.createMovementVector(-Constants.SHIP_MOVEMENT_SPPED, 0, 0, deltaTime);
-			playerEntity.moveEntityRelativ(movement);
-		}
-		if (inputs.keyPresse(GLFW_KEY_D)) {
-			playerEntity.getEntityState().setRotationZ((float) Math.toRadians(-10.0d));
-			Vector3f movement = ServiceFunctions.createMovementVector(Constants.SHIP_MOVEMENT_SPPED, 0, 0, deltaTime);
-			playerEntity.moveEntityRelativ(movement);
-		}
-		// CLEAR ROTATION IF NOT LEFT OR RIGHT
-		if (!inputs.keyPresse(GLFW_KEY_A) && !inputs.keyPresse(GLFW_KEY_D)) {
-			playerEntity.getEntityState().setRotationZ((float) Math.toRadians(0.0d));
-		}
-		if (inputs.keyPresse(GLFW_KEY_W)) {
-			Vector3f movement = ServiceFunctions.createMovementVector(0, 0, -Constants.SHIP_MOVEMENT_SPPED, deltaTime);
-			playerEntity.moveEntityRelativ(movement);
-		}
-		if (inputs.keyPresse(GLFW_KEY_S)) {
-			Vector3f movement = ServiceFunctions.createMovementVector(0, 0, Constants.SHIP_MOVEMENT_SPPED, deltaTime);
-			playerEntity.moveEntityRelativ(movement);
-		}
+		if (game.allowShipMovement) {
+
+			if (inputs.keyPresse(GLFW_KEY_A)) {
+				playerEntity.getEntityState().setRotationZ((float) Math.toRadians(10.0d));
+				Vector3f movement = ServiceFunctions.createMovementVector(-Constants.SHIP_MOVEMENT_SPPED, 0, 0, deltaTime);
+				playerEntity.moveEntityRelativ(movement);
+			}
+			if (inputs.keyPresse(GLFW_KEY_D)) {
+				playerEntity.getEntityState().setRotationZ((float) Math.toRadians(-10.0d));
+				Vector3f movement = ServiceFunctions.createMovementVector(Constants.SHIP_MOVEMENT_SPPED, 0, 0, deltaTime);
+				playerEntity.moveEntityRelativ(movement);
+			}
+			// CLEAR ROTATION IF NOT LEFT OR RIGHT
+			if (!inputs.keyPresse(GLFW_KEY_A) && !inputs.keyPresse(GLFW_KEY_D)) {
+				playerEntity.getEntityState().setRotationZ((float) Math.toRadians(0.0d));
+			}
+			if (inputs.keyPresse(GLFW_KEY_W)) {
+				Vector3f movement = ServiceFunctions.createMovementVector(0, 0, -Constants.SHIP_MOVEMENT_SPPED, deltaTime);
+				playerEntity.moveEntityRelativ(movement);
+			}
+			if (inputs.keyPresse(GLFW_KEY_S)) {
+				Vector3f movement = ServiceFunctions.createMovementVector(0, 0, Constants.SHIP_MOVEMENT_SPPED, deltaTime);
+				playerEntity.moveEntityRelativ(movement);
+			}
 		}
 		// EXPERIMENTAL!!!!
 		if (inputs.keyPresse(GLFW_KEY_F)) {
@@ -309,8 +314,8 @@ public class MainGameLoop {
 				}
 			}
 		}
-		
-		//Colission between Ship and Enemy
+
+		// Colission between Ship and Enemy
 		boolean hitDetected = false;
 		Vector3f[] boxPoints = generateHitBoxPoints(game.getPlayer().getEntity());
 		for (Vector3f boxPoint : boxPoints) {
@@ -361,7 +366,6 @@ public class MainGameLoop {
 		float halfDimensionY = e.getDimensions().getHeight() / 2;
 		float halfDimensionZ = e.getDimensions().getLength() / 2;
 		if (((p.x - halfDimensionX) < point.x && (p.x + halfDimensionX) > point.x) && ((p.y - halfDimensionY) < point.y && (p.y + halfDimensionY) > point.y) && ((p.z - halfDimensionZ) < point.z && (p.z + halfDimensionZ) > point.z)) {
-			LOGGER.warn("Point in Box");
 			return true;
 		}
 		return false;
@@ -424,7 +428,8 @@ public class MainGameLoop {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		Camera camera = game.getCamera();
 		camera.updateViewMatrix();
-		// Shading Terrain
+		//Render Skybox
+		// Render Terrain
 		game.getTerrain().render(game.getTerrainShader(), camera, game.getSun());
 		// Shading entities
 		// Render enemies
@@ -432,9 +437,6 @@ public class MainGameLoop {
 			Entity entity = enemy.getEntity();
 			if (entity.showEntity()) {
 				entity.render(0.0f, game.getEntityShader(), camera, game.getSun());
-			}
-			if (game.allowEnemyMovement) {
-				// Moving
 			}
 		}
 		// Render Shots
@@ -446,6 +448,7 @@ public class MainGameLoop {
 		}
 		// Render Player
 		game.getPlayer().getEntity().render(deltaTime, game.getEntityShader(), game.getCamera(), game.getSun());
+		game.getSkybox().render(game.getSkyboxShader(), camera);
 	}
 
 	private static void shoot() {

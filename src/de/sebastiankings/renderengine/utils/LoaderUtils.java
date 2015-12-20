@@ -17,6 +17,7 @@ import static org.lwjgl.opengl.GL11.glGenTextures;
 import static org.lwjgl.opengl.GL11.glTexImage2D;
 import static org.lwjgl.opengl.GL11.glTexParameteri;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL15.GL_ELEMENT_ARRAY_BUFFER;
@@ -42,12 +43,14 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL13;
 
 import de.matthiasmann.twl.utils.PNGDecoder;
 import de.matthiasmann.twl.utils.PNGDecoder.Format;
 import de.sebastiankings.renderengine.entities.Model;
+import de.sebastiankings.renderengine.entities.types.Skybox;
+import de.sebastiankings.renderengine.texture.PNGData;
 import de.sebastiankings.renderengine.texture.Texture;
-
 
 public class LoaderUtils {
 	private static final Logger LOGGER = Logger.getLogger(LoaderUtils.class);
@@ -55,34 +58,43 @@ public class LoaderUtils {
 	private static List<Integer> vbos = new ArrayList<Integer>();
 	private static List<Integer> textures = new ArrayList<Integer>();
 
-    public static Model loadToVAO(float[] positions,  float[] textureCoords, float[] normals,int[] indices,float[] emission,float[] ambient,float[] specular,float[] shininess){
-        // create VAO and assign data
-        int vaoID = createVAO();
-        createIndexBuffer(indices);
-        createVertexBuffer(0,3,positions);
-        createVertexBuffer(1,3,normals);
-        createVertexBuffer(2,2,textureCoords);
-        createVertexBuffer(3,3,emission);
-        createVertexBuffer(4,3,ambient);
-        createVertexBuffer(5,3,specular);
-        createVertexBuffer(6,1,shininess);
-        unbindVAO();
+	public static Model loadToVAO(float[] positions, float[] textureCoords, float[] normals, int[] indices, float[] emission, float[] ambient, float[] specular, float[] shininess) {
+		// create VAO and assign data
+		int vaoID = createVAO();
+		createIndexBuffer(indices);
+		createVertexBuffer(0, 3, positions);
+		createVertexBuffer(1, 3, normals);
+		createVertexBuffer(2, 2, textureCoords);
+		createVertexBuffer(3, 3, emission);
+		createVertexBuffer(4, 3, ambient);
+		createVertexBuffer(5, 3, specular);
+		createVertexBuffer(6, 1, shininess);
+		unbindVAO();
 
-        // save VAO in RawModel
-        return new Model(vaoID,indices.length);
-    }
-    
-    public static Model loadTerrainVAO(float[] positions,  float[] textureCoords, float[] normals,int[] indices){
-        // create VAO and assign data
-        int vaoID = createVAO();
-        createIndexBuffer(indices);
-        createVertexBuffer(0,3,positions);
-        createVertexBuffer(1,3,normals);
-        createVertexBuffer(2,2,textureCoords);
-        unbindVAO();
-        // save VAO in RawModel
-        return new Model(vaoID,indices.length);
-    }
+		// save VAO in RawModel
+		return new Model(vaoID, indices.length);
+	}
+
+	public static Model loadTerrainVAO(float[] positions, float[] textureCoords, float[] normals, int[] indices) {
+		// create VAO and assign data
+		int vaoID = createVAO();
+		createIndexBuffer(indices);
+		createVertexBuffer(0, 3, positions);
+		createVertexBuffer(1, 3, normals);
+		createVertexBuffer(2, 2, textureCoords);
+		unbindVAO();
+		// save VAO in Model
+		return new Model(vaoID, indices.length);
+	}
+	
+	public static Model loadSkyboxVAO(float[] positions) {
+		// create VAO and assign data
+		int vaoID = createVAO();
+		createVertexBuffer(0, 3, positions);
+		unbindVAO();
+		// save VAO in Model
+		return new Model(vaoID, positions.length / 3);
+	}
 
 	public static Texture loadTexture(String fileName) {
 		LOGGER.debug("Loading Texture: " + fileName);
@@ -92,22 +104,23 @@ public class LoaderUtils {
 		try {
 			in = new FileInputStream(fileName);
 			PNGDecoder decoder = new PNGDecoder(in);
-			ByteBuffer buf = ByteBuffer.allocateDirect(4*decoder.getWidth()*decoder.getHeight());
-			decoder.decode(buf, decoder.getWidth()*4, Format.RGBA);
+			ByteBuffer buf = ByteBuffer.allocateDirect(4 * decoder.getWidth() * decoder.getHeight());
+			decoder.decode(buf, decoder.getWidth() * 4, Format.RGBA);
 			buf.flip();
 			// create texture, activate and upload texture //
 			textureID = glGenTextures();
 			texture = new Texture(textureID);
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, textureID);		   
+			glBindTexture(GL_TEXTURE_2D, textureID);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, decoder.getWidth(), decoder.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 			glGenerateMipmap(GL_TEXTURE_2D);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			
+
 		} catch (IOException e) {
+			LOGGER.error("Error Loading Texture!", e);
 			e.printStackTrace();
 		} finally {
 			try {
@@ -118,34 +131,85 @@ public class LoaderUtils {
 			}
 		}
 
-
 		textures.add(textureID);
 
 		return texture;
 	}
 
+	public static Texture loadCubeMapTexture(String folderName){
+		int textureID = glGenTextures();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+		Texture texture = null;
+		PNGData front = loadPngData(folderName + "/front.png");
+		PNGData back = loadPngData(folderName+ "/back.png");
+		PNGData left = loadPngData(folderName+ "/left.png");
+		PNGData right = loadPngData(folderName+ "/right.png");
+		PNGData bottom = loadPngData(folderName+ "/bottom.png");
+		PNGData top = loadPngData(folderName+ "/top.png");
 
-	public static void cleanUp(){
+		
+		// create texture, activate and upload texture //
+		textureID = glGenTextures();
+		texture = new Texture(textureID);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+		//Bind Actual Texture Data
+		glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA, front.getWidth(), front.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, front.getPictureData());
+		glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA, back.getWidth(), back.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, back.getPictureData());
+		glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA, left.getWidth(), left.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, left.getPictureData());
+		glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA, right.getWidth(), right.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, right.getPictureData());
+		glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA, bottom.getWidth(), bottom.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, bottom.getPictureData());
+		glTexImage2D(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA, top.getWidth(), top.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, top.getPictureData());
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		texture = new Texture(textureID);
+		return texture;
+	}
+
+	private static PNGData loadPngData(String fileName) {
+		LOGGER.trace("Loading PNG-Data from file " + fileName);
+		InputStream in = null;
+		try {
+			in = new FileInputStream(fileName);
+			PNGDecoder decoder = new PNGDecoder(in);
+			ByteBuffer buf = ByteBuffer.allocateDirect(4 * decoder.getWidth() * decoder.getHeight());
+			decoder.decode(buf, decoder.getWidth() * 4, Format.RGBA);
+			buf.flip();
+			return new PNGData(decoder.getWidth(), decoder.getHeight(), buf);
+		} catch (IOException e) {
+			LOGGER.error("Error Loading Texture!", e);
+			return new PNGData(-1, -1, ByteBuffer.allocateDirect(0));
+		} finally {
+			try {
+				in.close();
+			} catch (IOException e) {
+				LOGGER.error("Error while closing FileInputStream");
+			}
+		}
+	}
+
+	public static void cleanUp() {
 		LOGGER.debug("Clean LoadingUtils");
-		for(int vao:vaos){
+		for (int vao : vaos) {
 			glDeleteVertexArrays(vao);
 		}
-		for(int vbo:vbos){
+		for (int vbo : vbos) {
 			glDeleteBuffers(vbo);
 		}
-		for(int texture:textures){
+		for (int texture : textures) {
 			glDeleteTextures(texture);
 		}
 	}
 
-	private static int createVAO(){
+	private static int createVAO() {
 		int vaoID = glGenVertexArrays();
 		vaos.add(vaoID);
 		glBindVertexArray(vaoID);
 		return vaoID;
 	}
 
-	private static void createVertexBuffer(int attributeNumber,int coordinateSize, float[] data){
+	private static void createVertexBuffer(int attributeNumber, int coordinateSize, float[] data) {
 		// generate and save new ID for the vertex buffer object
 		int vboID = glGenBuffers();
 		vbos.add(vboID);
@@ -156,17 +220,17 @@ public class LoaderUtils {
 		glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
 
 		// tell OpenGL how to interpret the data
-		glVertexAttribPointer(attributeNumber,coordinateSize,GL_FLOAT,false,0,0);
+		glVertexAttribPointer(attributeNumber, coordinateSize, GL_FLOAT, false, 0, 0);
 
 		// unbind buffer
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	private static void unbindVAO(){
+	private static void unbindVAO() {
 		glBindVertexArray(0);
 	}
 
-	private static void createIndexBuffer(int[] indices){
+	private static void createIndexBuffer(int[] indices) {
 		LOGGER.trace("Creating Indexbuffer");
 		// generate and save new ID for the index buffer object
 		int vboID = glGenBuffers();
@@ -178,19 +242,18 @@ public class LoaderUtils {
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
 	}
 
-	public static IntBuffer storeDataInIntBuffer(int[] data){
+	public static IntBuffer storeDataInIntBuffer(int[] data) {
 		IntBuffer buffer = BufferUtils.createIntBuffer(data.length);
 		buffer.put(data);
 		buffer.flip();
 		return buffer;
 	}
 
-	public static FloatBuffer storeDataInFloatBuffer(float[] data){
+	public static FloatBuffer storeDataInFloatBuffer(float[] data) {
 		FloatBuffer buffer = BufferUtils.createFloatBuffer(data.length);
 		buffer.put(data);
 		buffer.flip();
 		return buffer;
 	}
-	
 
 }
