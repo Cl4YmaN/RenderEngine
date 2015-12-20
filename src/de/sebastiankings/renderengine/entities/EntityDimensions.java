@@ -21,7 +21,7 @@ public class EntityDimensions {
 		return width;
 	}
 
-	public float getHeigt() {
+	public float getHeight() {
 		return heigt;
 	}
 

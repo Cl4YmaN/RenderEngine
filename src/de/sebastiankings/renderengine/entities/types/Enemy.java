@@ -7,8 +7,9 @@ import de.sebastiankings.renderengine.entities.Entity;
 public class Enemy {
 
 	private Entity entity;
-
 	private Vector3f relativMovement;
+	
+	public boolean isAlive = true;
 
 	public Enemy(Entity entity, Vector3f spawn, Vector3f relativMovement) {
 		this.entity = entity;
@@ -22,6 +23,11 @@ public class Enemy {
 
 	public Vector3f getRelativMovement() {
 		return relativMovement;
+	}
+	
+	public void invalidate(){
+		this.isAlive = false;
+		this.entity.setShowEntity(false);
 	}
 
 }

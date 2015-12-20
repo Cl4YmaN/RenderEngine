@@ -8,6 +8,8 @@ public class Shot {
 	private Entity entity;
 	private long fired;
 	
+	public boolean isValid = true;
+	
 	public Shot(Entity entity,long fired){
 		this.entity = entity;
 		this.fired = fired;
@@ -29,6 +31,11 @@ public class Shot {
 
 	public long getFired() {
 		return fired;
+	}
+	
+	public void invalidate(){
+		this.isValid = false;
+		this.entity.setShowEntity(false);
 	}
 
 	

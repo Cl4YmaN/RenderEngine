@@ -13,7 +13,7 @@ import de.sebastiankings.renderengine.shaders.TerrainShaderProgramm;
 import de.sebastiankings.renderengine.terrain.Terrain;
 
 public class Game {
-
+	
 	// Special Entitys
 	private Player player;
 	private Terrain terrain;
@@ -33,7 +33,7 @@ public class Game {
 	public boolean showEgo = false;
 	public boolean gamePaused = false;
 	public boolean doGameLogics = true;
-
+	public boolean logFps = false;
 	// public timestamps
 	public long lastShotFired;
 

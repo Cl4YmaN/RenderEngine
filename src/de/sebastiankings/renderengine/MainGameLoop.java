@@ -87,8 +87,8 @@ public class MainGameLoop {
 			long lastStartTime = System.currentTimeMillis() - 10;
 			while (glfwWindowShouldClose(windowId) == GL_FALSE) {
 				long deltaTime = System.currentTimeMillis() - lastStartTime;
-				if(deltaTime != 0){
-					LOGGER.info("FPS : " + (1000 / deltaTime));					
+				if (game.logFps && deltaTime != 0) {
+					LOGGER.info("FPS : " + (1000 / deltaTime));
 				}
 				lastStartTime = System.currentTimeMillis();
 				handleInputs(deltaTime);
@@ -160,7 +160,7 @@ public class MainGameLoop {
 		LOGGER.debug("Enemy Count " + enemyCount);
 		Random r = new Random();
 		for (int i = 0; i < enemyCount; i++) {
-			float xPosition = (r.nextFloat() * (game.getTerrain().getWidth() - 30))- (game.getTerrain().getWidth() / 2);
+			float xPosition = (r.nextFloat() * (game.getTerrain().getWidth() - 30)) - (game.getTerrain().getWidth() / 2);
 			Entity temp = EntityFactory.createEntity(EntityType.GUMBA);
 			temp.rotateY(Constants.RAD_90);
 			Vector3f spawn = new Vector3f(xPosition, 0, -(enemyStartOffset + i * distanceBetweenEnemy));
@@ -187,6 +187,8 @@ public class MainGameLoop {
 		if (inputs.keyPresse(GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose(DisplayManager.getWindow(), GL_TRUE);
 		}
+		if(game.allowShipMovement){
+			
 		if (inputs.keyPresse(GLFW_KEY_A)) {
 			playerEntity.getEntityState().setRotationZ((float) Math.toRadians(10.0d));
 			Vector3f movement = ServiceFunctions.createMovementVector(-Constants.SHIP_MOVEMENT_SPPED, 0, 0, deltaTime);
@@ -208,6 +210,7 @@ public class MainGameLoop {
 		if (inputs.keyPresse(GLFW_KEY_S)) {
 			Vector3f movement = ServiceFunctions.createMovementVector(0, 0, Constants.SHIP_MOVEMENT_SPPED, deltaTime);
 			playerEntity.moveEntityRelativ(movement);
+		}
 		}
 		// EXPERIMENTAL!!!!
 		if (inputs.keyPresse(GLFW_KEY_F)) {
@@ -247,11 +250,13 @@ public class MainGameLoop {
 		// Make near enemys visible;
 		float playerCurrentZ = game.getPlayer().getEntity().getEntityState().getCurrentPosition().z;
 		for (Enemy enemy : game.getEnemies()) {
-			float enemyZ = enemy.getEntity().getEntityState().getCurrentPosition().z;
-			if (playerCurrentZ + Constants.ENEMY_MAX_DRAW_DISTANCE > enemyZ && playerCurrentZ - Constants.ENEMY_MAX_DRAW_DISTANCE < enemyZ) {
-				enemy.getEntity().setShowEntity(true);
-			} else {
-				enemy.getEntity().setShowEntity(false);
+			if (enemy.isAlive) {
+				float enemyZ = enemy.getEntity().getEntityState().getCurrentPosition().z;
+				if (playerCurrentZ + Constants.ENEMY_MAX_DRAW_DISTANCE > enemyZ && playerCurrentZ - Constants.ENEMY_MAX_DRAW_DISTANCE < enemyZ) {
+					enemy.getEntity().setShowEntity(true);
+				} else {
+					enemy.getEntity().setShowEntity(false);
+				}
 			}
 
 		}
@@ -263,7 +268,7 @@ public class MainGameLoop {
 			if (shot.validate(currentTime)) {
 				shot.getEntity().moveEntityGlobal(new Vector3f(globalMovement).add(0, 0, -Constants.SHOT_MOVEMENT_SPEED));
 			} else {
-				shot.getEntity().setShowEntity(false);
+				shot.invalidate();
 				invalidShots.add(shot);
 			}
 		}
@@ -277,9 +282,97 @@ public class MainGameLoop {
 			game.getPlayer().getEntity().moveEntityGlobal(globalMovement);
 		}
 
+		// Colissions!
+		// First: Active Shots and Visible enemys!
+		for (Shot shot : game.getShots()) {
+			if (shot.isValid) {
+				boolean hitDetected = false;
+				Vector3f[] boxPoints = generateHitBoxPoints(shot.getEntity());
+				for (Vector3f boxPoint : boxPoints) {
+					for (Enemy enemy : game.getEnemies()) {
+						if (enemy.isAlive) {
+							if (pointIsInEntityBox(boxPoint, enemy.getEntity())) {
+								hitDetected = true;
+								shot.invalidate();
+								enemy.invalidate();
+								break;
+							}
+						}
+					}
+					if (hitDetected) {
+						break;
+					}
+				}
+				if (hitDetected) {
+					LOGGER.trace("Shot hit enemy");
+					hitDetected = false;
+				}
+			}
+		}
+		
+		//Colission between Ship and Enemy
+		boolean hitDetected = false;
+		Vector3f[] boxPoints = generateHitBoxPoints(game.getPlayer().getEntity());
+		for (Vector3f boxPoint : boxPoints) {
+			for (Enemy enemy : game.getEnemies()) {
+				if (enemy.isAlive) {
+					if (pointIsInEntityBox(boxPoint, enemy.getEntity())) {
+						hitDetected = true;
+						enemy.invalidate();
+						break;
+					}
+				}
+			}
+			if (hitDetected) {
+				break;
+			}
+		}
+		if (hitDetected) {
+			LOGGER.info("Yout died!");
+			game.allowGlobalMovement = false;
+			game.allowShipMovement = false;
+		}
 	}
 
-	private static void render2(long deltaTime) {
+	private static Vector3f[] generateHitBoxPoints(Entity e) {
+		Vector3f[] result = new Vector3f[8];
+		Vector3f p = e.getEntityState().getRealPosition();
+		float dX = e.getDimensions().getWidth() / 2;
+		float dY = e.getDimensions().getHeight() / 2;
+		float dZ = e.getDimensions().getLength() / 2;
+		result[0] = new Vector3f(p.x - dX, p.y + dY, p.z - dZ);
+		result[1] = new Vector3f(p.x + dX, p.y + dY, p.z - dZ);
+		result[2] = new Vector3f(p.x - dX, p.y + dY, p.z + dZ);
+		result[3] = new Vector3f(p.x + dX, p.y + dY, p.z + dZ);
+		result[4] = new Vector3f(p.x - dX, p.y - dY, p.z - dZ);
+		result[5] = new Vector3f(p.x + dX, p.y - dY, p.z - dZ);
+		result[6] = new Vector3f(p.x - dX, p.y - dY, p.z + dZ);
+		result[7] = new Vector3f(p.x + dX, p.y - dY, p.z + dZ);
+		return result;
+
+	}
+
+	/**
+	 * Checks if an given Point in Worldspace is within an entitys Box
+	 */
+	private static boolean pointIsInEntityBox(Vector3f point, Entity e) {
+		Vector3f p = e.getEntityState().getRealPosition();
+		float halfDimensionX = e.getDimensions().getWidth() / 2;
+		float halfDimensionY = e.getDimensions().getHeight() / 2;
+		float halfDimensionZ = e.getDimensions().getLength() / 2;
+		if (((p.x - halfDimensionX) < point.x && (p.x + halfDimensionX) > point.x) && ((p.y - halfDimensionY) < point.y && (p.y + halfDimensionY) > point.y) && ((p.z - halfDimensionZ) < point.z && (p.z + halfDimensionZ) > point.z)) {
+			LOGGER.warn("Point in Box");
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Optimized Rendering // Improved rendertime per frame
+	 * 
+	 * @param deltaTime
+	 */
+	private static void renderOptimized(long deltaTime) {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		Camera camera = game.getCamera();
