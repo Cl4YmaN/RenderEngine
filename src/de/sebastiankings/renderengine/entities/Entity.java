@@ -50,6 +50,7 @@ public class Entity extends BaseEntity {
 		shader.loadTexture();
 		shader.loadLight(light);
 		shader.loadViewMatrix(camera.getViewMatrix());
+		shader.loadProjectionMatrix(camera.getProjectionMatrix());
 
 		// bind VAO and activate VBOs //
 		Model model = this.getModel();
@@ -72,7 +73,6 @@ public class Entity extends BaseEntity {
 
 		glBindTexture(GL_TEXTURE_2D, this.getTexture().getTextureID());
 		shader.loadModelMatrix(this.getModelMatrix());
-		shader.loadProjectionMatrix(camera.getProjectionMatrix());
 
 		glDrawElements(GL_TRIANGLES, model.getVertexCount(), GL_UNSIGNED_INT, 0);
 

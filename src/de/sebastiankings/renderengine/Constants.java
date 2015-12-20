@@ -22,6 +22,7 @@ public class Constants {
 	//MAX/MIN VALUES
 	public static final int MAX_SHOOTS_FIRED = 1;
 	public static final float PLAYER_MAX_RELATIV_DISTANCE_X = 100f;
+	public static final float ENEMY_MAX_DRAW_DISTANCE = 200f;
 	public static final float PLAYER_MAX_RELATIV_DISTANCE_Y = 0;
 	public static final float PLAYER_MAX_RELATIV_DISTANCE_Z = 150;
 	public static final int SHOT_MAX_LIFE_TIME = 1000; //ms
