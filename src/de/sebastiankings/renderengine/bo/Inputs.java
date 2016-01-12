@@ -20,7 +20,7 @@ public class Inputs {
 		this.mouse = new CursorHandler();
 	}
 	
-	public boolean keyPresse(int key){
+	public boolean keyPressed(int key){
 		return keyboard.iskeyPressed(key);
 	}
 

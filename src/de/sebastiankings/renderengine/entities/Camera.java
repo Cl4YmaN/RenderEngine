@@ -41,9 +41,8 @@ public class Camera {
 	
 	public void loadAlternativCamSettings(Vector3f playerPositoin){
 		this.projectionMatrix = createProjectionMatrix(1.0f, 2000.0f);
-		this.camPos = new Vector3f(0, 10, 10).add(playerPositoin);
-		this.lookDir = new Vector3f(0,-1,0);
-		this.theta = (float) Math.PI * 0.1f;
+		this.camPos = new Vector3f(0, 20, 50).add(playerPositoin);
+		this.theta = (float) Math.PI * 0.05f;
 		this.phi = (float) Math.PI * 0.0f;
 	}
 
@@ -132,5 +131,9 @@ public class Camera {
 		m.m32 = -((2 * near * far) / frustum_length);
 		m.m33 = 0;
 		return m;
+	}
+	
+	public void setCameraPosition(Vector3f camPos){
+		this.camPos = camPos;
 	}
 }

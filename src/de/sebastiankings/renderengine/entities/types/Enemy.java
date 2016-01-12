@@ -29,5 +29,14 @@ public class Enemy {
 		this.isAlive = false;
 		this.entity.setShowEntity(false);
 	}
+	
+	public void move(float deltaTime){
+		Vector3f relativePosition = entity.getEntityState().getRelativePosition();
+		if(relativePosition.length() >= 10 || relativePosition.length() <= -10){
+			relativMovement.negate();
+		}
+		entity.moveEntityRelativ(new Vector3f(relativMovement).mul(deltaTime));
+		
+	}
 
 }

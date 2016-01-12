@@ -26,7 +26,7 @@ public class TerrainUtils {
 				// horizontLine
 				-halfWidth, terrainHeight, -length, halfWidth, terrainHeight, -length };
 
-		// float[] textures = { 0.0f, 0.0f, 0.0f, 1.0f, (float) (length * 0.8 /
+		 //float[] textures = { 0.0f, 0.0f, 0.0f, 1.0f, (float) (length * 0.8 /
 		// halfWidth), 0.0f, (float) (length * 0.8/ halfWidth), 1.0f, };
 		float[] textures = { 0.0f, 0.0f, 0.0f, 1.0f, 10, 0.0f, 10, 1.0f, };
 

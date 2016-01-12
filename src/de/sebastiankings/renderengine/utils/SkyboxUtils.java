@@ -8,7 +8,7 @@ import de.sebastiankings.renderengine.texture.Texture;
 
 public class SkyboxUtils {
 	private static final Logger LOGGER = Logger.getLogger(SkyboxUtils.class);
-	private static final float SIZE = 1500;
+	private static final float SIZE = 512;
 
 	private static final float[] VERTICES = { -SIZE, SIZE, -SIZE, -SIZE, -SIZE, -SIZE, SIZE, -SIZE, -SIZE, SIZE, -SIZE, -SIZE, SIZE, SIZE, -SIZE, -SIZE, SIZE, -SIZE,
 

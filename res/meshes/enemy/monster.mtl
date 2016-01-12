@@ -1,0 +1,8 @@
+# Blender MTL File: 'None'
+# Material Count: 1
+
+newmtl Mat1
+Ns 0
+Kd 0.000000 0.000000 0.000000
+map_Kd monster_texture.png
+illum 2

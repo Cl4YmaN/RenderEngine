@@ -21,7 +21,9 @@ void main(void){
     
     // TODO: Ersetzen Sie die folgende Zeile, um die Texturfarbe für diesen Texel abzufragen und als diffuse Materialfarbe zu verwenden
     vec3 diffuse = texture(texture1,textureCoords).xyz;
-    
+   // if(diffuse.x <= 0.5f && diffuse.y <= 0.5f && diffuse.z <= 0.5f){
+    //	discard;
+  //  }
     
     out_Color = vec4(diffuse,1);
 }

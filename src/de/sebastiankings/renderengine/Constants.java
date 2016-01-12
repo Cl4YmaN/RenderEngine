@@ -15,6 +15,7 @@ public class Constants {
 	public static final float LEVEL_MOVEMENT_SPEED = 0.05f; // PER MS
 	public static final float SHIP_MOVEMENT_SPPED = 0.07f; // per MS
 	public static final float SHOT_MOVEMENT_SPEED = 0.7f; // per MS
+	public static final float ENEMY_MOVEMENT_SPEED = 0.01f; // per MS
 	
 	//COOLDOWNS
 	public static final int SHOT_COOLDOWN = 250; //4 Shots / second

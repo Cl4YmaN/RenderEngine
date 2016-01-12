@@ -152,7 +152,7 @@ public class MainGameLoop {
 	private static void initEnemyEntites() {
 		List<Enemy> enemies = new ArrayList<>();
 		// Level generate Random Enemys
-		float enemyDensity = 1 / 200f;
+		float enemyDensity = 1 / 2000f;
 		float enemyStartOffset = 200;
 		float enemyEndOffset = 400;
 		LOGGER.trace("Calculating enemy Count!");
@@ -166,11 +166,18 @@ public class MainGameLoop {
 		Random r = new Random();
 		for (int i = 0; i < enemyCount; i++) {
 			float xPosition = (r.nextFloat() * (game.getTerrain().getWidth() - 30)) - (game.getTerrain().getWidth() / 2);
-			Entity temp = EntityFactory.createEntity(EntityType.GUMBA);
-			temp.rotateY(Constants.RAD_90);
+			Entity temp = null;
+			int enemyType = r.nextInt(2);
+			if(enemyType == 0) {
+				temp = EntityFactory.createEntity(EntityType.ENEMY);
+			} else if(enemyType == 1) {
+				temp = EntityFactory.createEntity(EntityType.GUMBA);
+				temp.rotateY(-Constants.RAD_90);
+			}
 			Vector3f spawn = new Vector3f(xPosition, 0, -(enemyStartOffset + i * distanceBetweenEnemy));
 			LOGGER.trace("Spawnpoint: " + spawn.toString(Constants.DEFAULT_FLOAT_FORMAT));
-			Enemy next = new Enemy(temp, spawn, new Vector3f());
+			Vector3f enemyRelativMovement = r.nextInt(2) == 1 ? new Vector3f(Constants.ENEMY_MOVEMENT_SPEED,0,0) : new Vector3f(-Constants.ENEMY_MOVEMENT_SPEED,0,0);
+			Enemy next = new Enemy(temp, spawn, enemyRelativMovement);
 			enemies.add(next);
 			addEntity(temp);
 		}
@@ -189,36 +196,36 @@ public class MainGameLoop {
 	private static void handleInputs(long deltaTime) {
 		Inputs inputs = game.getInputs();
 		Entity playerEntity = game.getPlayer().getEntity();
-		if (inputs.keyPresse(GLFW_KEY_ESCAPE)) {
+		if (inputs.keyPressed(GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose(DisplayManager.getWindow(), GL_TRUE);
 		}
 		if (game.allowShipMovement) {
 
-			if (inputs.keyPresse(GLFW_KEY_A)) {
+			if (inputs.keyPressed(GLFW_KEY_A)) {
 				playerEntity.getEntityState().setRotationZ((float) Math.toRadians(10.0d));
 				Vector3f movement = ServiceFunctions.createMovementVector(-Constants.SHIP_MOVEMENT_SPPED, 0, 0, deltaTime);
 				playerEntity.moveEntityRelativ(movement);
 			}
-			if (inputs.keyPresse(GLFW_KEY_D)) {
+			if (inputs.keyPressed(GLFW_KEY_D)) {
 				playerEntity.getEntityState().setRotationZ((float) Math.toRadians(-10.0d));
 				Vector3f movement = ServiceFunctions.createMovementVector(Constants.SHIP_MOVEMENT_SPPED, 0, 0, deltaTime);
 				playerEntity.moveEntityRelativ(movement);
 			}
 			// CLEAR ROTATION IF NOT LEFT OR RIGHT
-			if (!inputs.keyPresse(GLFW_KEY_A) && !inputs.keyPresse(GLFW_KEY_D)) {
+			if (!inputs.keyPressed(GLFW_KEY_A) && !inputs.keyPressed(GLFW_KEY_D)) {
 				playerEntity.getEntityState().setRotationZ((float) Math.toRadians(0.0d));
 			}
-			if (inputs.keyPresse(GLFW_KEY_W)) {
+			if (inputs.keyPressed(GLFW_KEY_W)) {
 				Vector3f movement = ServiceFunctions.createMovementVector(0, 0, -Constants.SHIP_MOVEMENT_SPPED, deltaTime);
 				playerEntity.moveEntityRelativ(movement);
 			}
-			if (inputs.keyPresse(GLFW_KEY_S)) {
+			if (inputs.keyPressed(GLFW_KEY_S)) {
 				Vector3f movement = ServiceFunctions.createMovementVector(0, 0, Constants.SHIP_MOVEMENT_SPPED, deltaTime);
 				playerEntity.moveEntityRelativ(movement);
 			}
 		}
 		// EXPERIMENTAL!!!!
-		if (inputs.keyPresse(GLFW_KEY_F)) {
+		if (inputs.keyPressed(GLFW_KEY_F)) {
 			if (game.allowGlobalMovement) {
 				game.allowGlobalMovement = false;
 			} else {
@@ -226,7 +233,7 @@ public class MainGameLoop {
 			}
 		}
 
-		if (inputs.keyPresse(GLFW_KEY_C)) {
+		if (inputs.keyPressed(GLFW_KEY_C)) {
 			if (game.showEgo) {
 				game.showEgo = false;
 				game.getCamera().loadDefaultCamSettings(game.getPlayer().getEntity().getEntityState().getCurrentPosition());
@@ -235,7 +242,7 @@ public class MainGameLoop {
 				game.getCamera().loadAlternativCamSettings(game.getPlayer().getEntity().getEntityState().getCurrentPosition());
 			}
 		}
-		if (inputs.keyPresse(GLFW_KEY_SPACE)) {
+		if (inputs.keyPressed(GLFW_KEY_SPACE)) {
 			shoot();
 
 		}
@@ -282,9 +289,19 @@ public class MainGameLoop {
 		}
 		// Move Player (global)
 		if (game.allowGlobalMovement) {
-			game.getCamera().move(globalMovement);
-			game.getSun().getLightPos().add(globalMovement);
 			game.getPlayer().getEntity().moveEntityGlobal(globalMovement);
+			if(game.showEgo){
+				Vector3f egoCamPosition = new Vector3f(game.getPlayer().getEntity().getEntityState().getRealPosition()).add(new Vector3f(0, 20, 50));
+				game.getCamera().setCameraPosition(egoCamPosition);
+			} else {
+				game.getCamera().move(globalMovement);				
+			}
+			game.getSun().getLightPos().add(globalMovement);
+		}
+		
+		//Move Enemys
+		for(Enemy enemy: game.getEnemies()){
+			enemy.move(deltaTime);
 		}
 
 		// Colissions!
